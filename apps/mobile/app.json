@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "AppEntrevistasCV",
+    "slug": "app-entrevistas-cv",
+    "owner": "TODO-EXPO-USERNAME",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "platforms": ["ios", "android", "web"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.appentrevistascv.app",
+      "infoPlist": {
+        "NSMicrophoneUsageDescription": "La app usa el micrófono para practicar entrevistas por voz.",
+        "NSSpeechRecognitionUsageDescription": "La app usa reconocimiento de voz para transcribir tus respuestas en la entrevista."
+      }
+    },
+    "android": {
+      "package": "com.appentrevistascv.app",
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "web": {
+      "bundler": "metro"
+    },
+    "extra": {
+      "apiUrl": "http://localhost:3000"
+    }
+  }
+}
