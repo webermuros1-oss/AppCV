@@ -9,6 +9,5 @@
     "types": ["react", "react-native"],
     "allowJs": true
   },
-  "include": ["App.tsx", "src/**/*", "app.config.ts"],
-  "references": [{ "path": "../../packages/shared" }]
+  "include": ["App.tsx", "src/**/*", "app.config.ts"]
 }

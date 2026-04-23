@@ -9,6 +9,5 @@
     "lib": ["ES2022"],
     "types": ["node"]
   },
-  "include": ["src/**/*", "api/**/*"],
-  "references": [{ "path": "../../packages/shared" }]
+  "include": ["src/**/*", "api/**/*"]
 }
