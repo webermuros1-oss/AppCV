@@ -1,15 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const messagesCreateMock = vi.fn();
+const generateContentMock = vi.fn();
 
-vi.mock('@anthropic-ai/sdk', () => {
-  class MockAnthropic {
-    messages = { create: messagesCreateMock };
+vi.mock('@google/genai', () => {
+  class MockGoogleGenAI {
+    models = { generateContent: generateContentMock };
     constructor(_opts: unknown) {
       // noop
     }
   }
-  return { default: MockAnthropic };
+  return { GoogleGenAI: MockGoogleGenAI };
 });
 
 type AppModule = typeof import('./index.js');
@@ -20,9 +20,7 @@ async function loadApp(): Promise<AppModule> {
 }
 
 function textResponse(text: string) {
-  return {
-    content: [{ type: 'text', text }],
-  };
+  return { text };
 }
 
 const CONFIG = {
@@ -34,8 +32,8 @@ const CONFIG = {
 
 describe('Hono app — /api/session/start', () => {
   beforeEach(() => {
-    process.env.ANTHROPIC_API_KEY = 'test-key';
-    messagesCreateMock.mockReset();
+    process.env.GOOGLE_API_KEY = 'test-key';
+    generateContentMock.mockReset();
   });
 
   afterEach(() => {
@@ -43,7 +41,7 @@ describe('Hono app — /api/session/start', () => {
   });
 
   it('devuelve sessionId y firstTurn en 200', async () => {
-    messagesCreateMock.mockResolvedValueOnce(textResponse('Hola, soy Elena. ¿Cuéntame sobre ti?'));
+    generateContentMock.mockResolvedValueOnce(textResponse('Hola, soy Elena. ¿Cuéntame sobre ti?'));
 
     const { app } = await loadApp();
     const res = await app.request('/api/session/start', {
@@ -63,8 +61,8 @@ describe('Hono app — /api/session/start', () => {
     expect(body.firstTurn.text).toBe('Hola, soy Elena. ¿Cuéntame sobre ti?');
   });
 
-  it('llama al SDK con modelo claude-sonnet-4-6 y el system prompt del persona', async () => {
-    messagesCreateMock.mockResolvedValueOnce(textResponse('Primera pregunta.'));
+  it('llama al SDK con modelo gemini-2.5-flash-lite y el system prompt del persona', async () => {
+    generateContentMock.mockResolvedValueOnce(textResponse('Primera pregunta.'));
 
     const { app } = await loadApp();
     await app.request('/api/session/start', {
@@ -73,14 +71,14 @@ describe('Hono app — /api/session/start', () => {
       body: JSON.stringify({ config: CONFIG }),
     });
 
-    expect(messagesCreateMock).toHaveBeenCalledTimes(1);
-    const args = messagesCreateMock.mock.calls[0]?.[0];
-    expect(args.model).toBe('claude-sonnet-4-6');
-    expect(typeof args.system).toBe('string');
-    expect(args.system).toContain(CONFIG.jobRole);
-    expect(args.system).toContain(CONFIG.industry);
-    expect(Array.isArray(args.messages)).toBe(true);
-    expect(args.messages[0]?.role).toBe('user');
+    expect(generateContentMock).toHaveBeenCalledTimes(1);
+    const args = generateContentMock.mock.calls[0]?.[0];
+    expect(args.model).toBe('gemini-2.5-flash-lite');
+    expect(typeof args.config.systemInstruction).toBe('string');
+    expect(args.config.systemInstruction).toContain(CONFIG.jobRole);
+    expect(args.config.systemInstruction).toContain(CONFIG.industry);
+    expect(Array.isArray(args.contents)).toBe(true);
+    expect(args.contents[0]?.role).toBe('user');
   });
 
   it('devuelve 400 si falta el config', async () => {
@@ -104,7 +102,7 @@ describe('Hono app — /api/session/start', () => {
   });
 
   it('devuelve 500 si el SDK tira error y no deja la sesión colgada', async () => {
-    messagesCreateMock.mockRejectedValueOnce(new Error('boom'));
+    generateContentMock.mockRejectedValueOnce(new Error('boom'));
 
     const { app } = await loadApp();
     const res = await app.request('/api/session/start', {
@@ -120,12 +118,12 @@ describe('Hono app — /api/session/start', () => {
 
 describe('Hono app — /api/session/turn', () => {
   beforeEach(() => {
-    process.env.ANTHROPIC_API_KEY = 'test-key';
-    messagesCreateMock.mockReset();
+    process.env.GOOGLE_API_KEY = 'test-key';
+    generateContentMock.mockReset();
   });
 
   it('con sessionId válido responde con interviewerTurn', async () => {
-    messagesCreateMock
+    generateContentMock
       .mockResolvedValueOnce(textResponse('Soy Elena. ¿Primer pregunta?'))
       .mockResolvedValueOnce(textResponse('Gracias. Siguiente pregunta: ¿por qué?'));
 
@@ -167,7 +165,7 @@ describe('Hono app — /api/session/turn', () => {
   });
 
   it('detecta cierre cuando el entrevistador agradece el tiempo', async () => {
-    messagesCreateMock
+    generateContentMock
       .mockResolvedValueOnce(textResponse('Hola, primera pregunta.'))
       .mockResolvedValueOnce(textResponse('Muchas gracias por tu tiempo, hemos terminado.'));
 
@@ -191,8 +189,8 @@ describe('Hono app — /api/session/turn', () => {
 
 describe('Hono app — /api/session/end', () => {
   beforeEach(() => {
-    process.env.ANTHROPIC_API_KEY = 'test-key';
-    messagesCreateMock.mockReset();
+    process.env.GOOGLE_API_KEY = 'test-key';
+    generateContentMock.mockReset();
   });
 
   it('con sessionId válido devuelve SessionReport parseado y borra la sesión', async () => {
@@ -202,7 +200,7 @@ describe('Hono app — /api/session/end', () => {
       fillerWords: 3,
       suggestions: ['uno', 'dos', 'tres'],
     });
-    messagesCreateMock
+    generateContentMock
       .mockResolvedValueOnce(textResponse('Primera pregunta.'))
       .mockResolvedValueOnce(textResponse(reportJson));
 
@@ -251,7 +249,7 @@ describe('Hono app — /api/session/end', () => {
   });
 
   it('devuelve 500 REPORT_PARSE_ERROR si el modelo responde con JSON irreparable', async () => {
-    messagesCreateMock
+    generateContentMock
       .mockResolvedValueOnce(textResponse('Primera pregunta.'))
       .mockResolvedValueOnce(textResponse('esto no es un JSON ni tiene llaves'));
 

@@ -11,7 +11,7 @@ import type {
   ApiErrorBody,
 } from '@app/shared';
 import type { InterviewTurn } from '@app/shared';
-import { chat, type ChatMessage } from './anthropic.js';
+import { chat, type ChatMessage } from './llm.js';
 import { buildPersona, configToPersonaArgs } from './personas.js';
 import {
   appendTurn,
