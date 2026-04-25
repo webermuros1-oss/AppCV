@@ -9,16 +9,13 @@ import type {
   EndSessionResponse,
 } from '@app/shared';
 
-declare const process: { env?: Record<string, string | undefined> } | undefined;
+declare const process: { env: Record<string, string | undefined> };
 
 function readApiUrl(): string {
-  try {
-    const env = typeof process !== 'undefined' ? process?.env : undefined;
-    const url = env?.['EXPO_PUBLIC_API_URL'];
-    if (typeof url === 'string' && url.length > 0) return url;
-  } catch {
-    // noop
-  }
+  // Acceso directo con punto: el plugin de Babel de Expo solo inlinea
+  // process.env.EXPO_PUBLIC_* cuando se lee así, no con corchetes.
+  const url = process.env.EXPO_PUBLIC_API_URL;
+  if (typeof url === 'string' && url.length > 0) return url;
   return 'http://localhost:3000';
 }
 
