@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "pnpm --filter api typecheck",
+  "buildCommand": "pnpm --filter @app/shared build && pnpm --filter api typecheck",
   "outputDirectory": ".",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
