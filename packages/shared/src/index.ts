@@ -17,4 +17,4 @@ export type {
   ApiErrorBody,
 } from './api-contract';
 
-export { API_ROUTES } from './api-contract';
+export { API_ROUTES } from './api-contract.js';
