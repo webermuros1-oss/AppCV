@@ -1,16 +1,13 @@
 /**
- * Handler para Vercel Functions.
+ * Handler para Vercel Functions (Node.js runtime).
  *
- * Vercel detecta automáticamente cualquier archivo dentro de `api/` como una
- * Serverless Function. `hono/vercel` expone un `handle` que convierte la app
- * Hono (estándar Web Fetch) en el formato que Vercel espera.
- *
- * IMPORTANTE: no usamos `@hono/node-server` aquí (eso es solo para el server
- * local de desarrollo, ver `src/server.ts`). En Vercel el runtime Node soporta
- * `Request`/`Response` globales directamente.
+ * Para `runtime: 'nodejs'` usamos `@hono/node-server/vercel`, que convierte
+ * el IncomingMessage de Node a un Web `Request` antes de llamar a Hono.
+ * `hono/vercel` (sin @hono/node-server) solo sirve para Edge Runtime, donde
+ * Vercel ya entrega un Web `Request` directamente.
  */
 
-import { handle } from 'hono/vercel';
+import { handle } from '@hono/node-server/vercel';
 import app from '../src/index.js';
 
 export const config = {
